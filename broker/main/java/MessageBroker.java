@@ -32,6 +32,10 @@ public class MessageBroker {
     private ConcurrentLinkedQueue<String> pendingMessages = new ConcurrentLinkedQueue<String>();
 
     public MessageBroker(){
+
+    }
+
+    public void startBrokerServer() {
         Selector selector = null;
         try {
             selector = Selector.open();
@@ -183,5 +187,6 @@ public class MessageBroker {
 
     public static void main(String[] args){
         MessageBroker broker = new MessageBroker();
+        broker.startBrokerServer();
     }
 }

@@ -14,7 +14,9 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by anon on 21/10/2015.
@@ -26,7 +28,7 @@ public class MessageBroker {
     public static final String HOSTNAME = "127.0.0.1";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
-    private SocketChannel subscriberChannel;
+    private List<SocketChannel> socketChannels = new ArrayList<SocketChannel>();
 
     public MessageBroker(){
         try{
@@ -62,6 +64,11 @@ public class MessageBroker {
                                 String message = "";
 
                                 while(byteBuffer.hasRemaining()){
+                                    try {
+                                        Thread.sleep(100);                      // FIXME - Find way to get message without sleeping...
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
                                     int bytesRead = socketChannel.read(byteBuffer);
                                     if(bytesRead == -1){
                                         socketChannel.close();
@@ -83,7 +90,7 @@ public class MessageBroker {
 
                                 break;
                             } else {
-                                subscriberChannel = socketChannel;
+                                socketChannels.add(socketChannel);
                             }
                         }
                     } else if (selectedKey.isReadable()) {
@@ -104,13 +111,19 @@ public class MessageBroker {
     }
 
     public void sendToSubscribers(String message){
-        try {
-            CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
+        CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
 
-            subscriberChannel.write(encoder.encode(CharBuffer.wrap(message)));
-        } catch (IOException e){
-            LOGGER.error("Failed to write message to subscribers.", e);
+        Iterator<SocketChannel> iterator = socketChannels.iterator();
+        while(iterator.hasNext()) {
+            try {
+                SocketChannel socketChannel = iterator.next();
+                socketChannel.write(encoder.encode(CharBuffer.wrap(message)));
+            } catch (IOException e) {
+                LOGGER.info("Failed to write to subscriber.  Removing subscriber from List of subscribers.");
+                iterator.remove();
+            }
         }
+
     }
 
     public static void main(String[] args){

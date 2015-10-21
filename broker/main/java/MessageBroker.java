@@ -4,6 +4,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -22,7 +23,7 @@ public class MessageBroker {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
 
     private static Collection<SocketChannel> publishers = new ConcurrentLinkedQueue<SocketChannel>();
-    private static Collection<Socket> subscribers = new ConcurrentLinkedQueue<Socket>();
+    private static Collection<SocketChannel> subscribers = new ConcurrentLinkedQueue<SocketChannel>();
 
     private ServerSocketChannel serverSocketChannel;
 
@@ -31,12 +32,12 @@ public class MessageBroker {
             int[] ports = {PUBLISHER_PORT, SUBCRIBER_PORT};
             Selector selector = Selector.open();
 
-            //for(int port : ports){
+            for(int port : ports){
                 serverSocketChannel = ServerSocketChannel.open();
                 serverSocketChannel.configureBlocking(false);
-                serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1", 8079));
+                serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1", port));
                 serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-            //}
+            }
 
             while(true) {
                 selector.select();
@@ -52,16 +53,15 @@ public class MessageBroker {
 
                         switch (socket.getLocalPort()) {
                             case PUBLISHER_PORT:
-                                //TODO handle publish
-                                    sendToSubscribers(socketChannel);
-                                    publishers.add(socketChannel);
+                                sendToSubscribers("Is acceptable....");
+                                publishers.add(socketChannel);
                                 break;
                             case SUBCRIBER_PORT:
-                                //TODO handle subscribe
+                                subscribers.add(socketChannel);
                                 break;
                         }
                     } else if (selectedKey.isReadable()) {
-                        sendToSubscribers((SocketChannel)publishers.toArray()[0]);
+                        sendToSubscribers("Is readable?");
                     }
                 }
             }
@@ -71,8 +71,23 @@ public class MessageBroker {
         }
     }
 
-    public void sendToSubscribers(SocketChannel socketChannel){
+    public void sendToSubscribers(String message){
+        ByteBuffer buf = ByteBuffer.allocate(48);
 
+
+        for(SocketChannel socketChannel : subscribers){
+            buf.clear();
+            buf.put(message.getBytes());
+            buf.flip();
+
+            while(buf.hasRemaining()) {
+                try {
+                    socketChannel.write(buf);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
 }

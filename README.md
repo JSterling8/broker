@@ -4,4 +4,4 @@ A simple publish/subscribe message broker implemented in Java.  An example Publi
 
 * Run the broker module's main method
 * Run the subscriber module's main method (you can start as many as you want)
-* Rune the producer module's main method
+* Run the producer module's main method (you can start as many as you want, but make sure to close them when you're done)

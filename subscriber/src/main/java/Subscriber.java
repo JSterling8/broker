@@ -12,25 +12,30 @@ public class Subscriber {
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException{
         SocketChannel socketChannel = SocketChannel.open();
         socketChannel.configureBlocking(true);
-        if (socketChannel.connect(new InetSocketAddress("127.0.0.1", 8078))) {
-            String message = "Unmodified";
-            ByteBuffer byteBuffer = ByteBuffer.allocate(512);
+        socketChannel.connect(new InetSocketAddress("127.0.0.1", 8078));
 
-            while(byteBuffer.hasRemaining()){
-                int bytesRead = socketChannel.read(byteBuffer);
-                if(bytesRead == -1){
-                    socketChannel.close();
-                    continue;
-                }
+        String message = "Unmodified";
+        ByteBuffer byteBuffer = ByteBuffer.allocate(512);
 
-                byteBuffer.flip();
-                Charset charset = Charset.forName("ISO-8859-1");
-                CharsetDecoder decoder = charset.newDecoder();
+        while(socketChannel.isConnectionPending()){
+            Thread.sleep(100);
+        }
 
-                message = decoder.decode(byteBuffer).toString();
+        while(byteBuffer.hasRemaining()){
+            int bytesRead = socketChannel.read(byteBuffer);
+            if(bytesRead == -1){
+                socketChannel.close();
+                continue;
             }
 
-            System.out.println("String is: '" + message + "'");
+            byteBuffer.flip();
+            Charset charset = Charset.forName("ISO-8859-1");
+            CharsetDecoder decoder = charset.newDecoder();
+
+            message = decoder.decode(byteBuffer).toString();
         }
+
+            System.out.println("String is: '" + message + "'");
+
     }
 }

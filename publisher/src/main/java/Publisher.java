@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 
@@ -13,16 +14,27 @@ public class Publisher {
         try {
             SocketChannel socketChannel = SocketChannel.open();
             socketChannel.configureBlocking(true);
+            socketChannel.connect(new InetSocketAddress("127.0.0.1", 8079));
 
-            if (socketChannel.connect(new InetSocketAddress("127.0.0.1", 8079))) {
-                CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
-
-                socketChannel.write(encoder.encode(CharBuffer.wrap("A publisher message")));
+            while(socketChannel.isConnectionPending()){
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (IOException e) {
+
+            CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
+
+            socketChannel.write(encoder.encode(CharBuffer.wrap("A publisher message")));
+            Thread.sleep(5000);
+        } catch (CharacterCodingException e1) {
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 
     public static void main(String[] args){

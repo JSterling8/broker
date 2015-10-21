@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
- * Created by anon on 21/10/2015.
+ * Created by Jonathan Sterling on 21/10/2015.
  *
  */
 public class MessageBroker {

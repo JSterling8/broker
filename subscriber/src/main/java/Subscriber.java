@@ -1,5 +1,7 @@
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -9,9 +11,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
 /**
- * Created by anon on 21/10/2015.
+ * Created by Jonathan Sterling on 21/10/2015.
  */
 public class Subscriber {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(Subscriber.class);
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {           //TODO Try/catch properly
         while (true) {
@@ -40,18 +44,17 @@ public class Subscriber {
                 message = decoder.decode(byteBuffer).toString();
             }
 
-            System.out.println("String is: '" + message + "'");
+            LOGGER.info("Message received: '" + message + "'");
 
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 CustomObject object = mapper.readValue(message, CustomObject.class);
 
-                System.out.println(object.getId());
-                System.out.println(object.getMessage());
+                LOGGER.info("Converted message to CustomObject with message: '" + object.getMessage() + "'\n" +
+                            "And UUID: '" + object.getId() + "'");
             } catch (JsonMappingException e){
-                System.out.println("Failed to decode object...");
+                LOGGER.error("Failed to decode object...", e);
             }
-
         }
     }
 }

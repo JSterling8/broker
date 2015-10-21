@@ -1,5 +1,5 @@
 /**
- * Created by anon on 21/10/2015.
+ * Created by Jonathan Sterling on 21/10/2015.
  */
 public class ServerSettings {
     public static final int PUBLISHER_PORT = 8079;

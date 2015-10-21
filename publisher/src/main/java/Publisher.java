@@ -1,4 +1,6 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -10,9 +12,10 @@ import java.nio.charset.CharsetEncoder;
 import java.util.UUID;
 
 /**
- * Created by anon on 21/10/2015.
+ * Created by Jonathan Sterling on 21/10/2015.
  */
 public class Publisher {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Publisher.class);
 
     public void connect(){
         try {
@@ -36,6 +39,8 @@ public class Publisher {
             ObjectMapper objectMapper = new ObjectMapper();
             String jsonEncodedObject = objectMapper.writeValueAsString(customObject);
 
+            LOGGER.debug("Sending CustomObject with message: " + customObject.getMessage() +
+                            "\nAnd UUID: " + customObject.getId());
             socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedObject)));
 
             while(true){

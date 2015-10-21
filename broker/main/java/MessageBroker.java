@@ -1,3 +1,4 @@
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -5,39 +6,43 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Collection;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by anon on 21/10/2015.
+ *
  */
 public class MessageBroker {
     public static final int PUBLISHER_PORT = 8079;
     public static final int SUBCRIBER_PORT = 8078;
+    public static final String HOSTNAME = "127.0.0.1";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
-
-    private static Collection<SocketChannel> publishers = new ConcurrentLinkedQueue<SocketChannel>();
-    private static Collection<SocketChannel> subscribers = new ConcurrentLinkedQueue<SocketChannel>();
-
-    private ServerSocketChannel serverSocketChannel;
+    private SocketChannel subscriberChannel;
 
     public MessageBroker(){
         try{
-            int[] ports = {PUBLISHER_PORT, SUBCRIBER_PORT};
             Selector selector = Selector.open();
 
-            for(int port : ports){
-                serverSocketChannel = ServerSocketChannel.open();
-                serverSocketChannel.configureBlocking(false);
-                serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1", port));
-                serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-            }
+            int[] ports = {PUBLISHER_PORT, SUBCRIBER_PORT};
+
+            ServerSocketChannel publisherServerSocketChannel = ServerSocketChannel.open();
+            publisherServerSocketChannel.configureBlocking(false);
+            publisherServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, PUBLISHER_PORT));
+            publisherServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+            ServerSocketChannel subscriberServerSocketChannel = ServerSocketChannel.open();
+            subscriberServerSocketChannel.configureBlocking(false);
+            subscriberServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, SUBCRIBER_PORT));
+            subscriberServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
             while(true) {
                 selector.select();
@@ -48,20 +53,47 @@ public class MessageBroker {
 
                     if (selectedKey.isAcceptable()) {
                         SocketChannel socketChannel = ((ServerSocketChannel) selectedKey.channel()).accept();
-                        socketChannel.configureBlocking(false);
-                        Socket socket = socketChannel.socket();
+                        if(socketChannel != null) {
+                            socketChannel.configureBlocking(false);
+                            Socket socket = socketChannel.socket();
 
-                        switch (socket.getLocalPort()) {
-                            case PUBLISHER_PORT:
-                                sendToSubscribers("Is acceptable....");
-                                publishers.add(socketChannel);
+                            if(socket.getLocalPort() == PUBLISHER_PORT){
+                                ByteBuffer byteBuffer = ByteBuffer.allocate(512);
+                                String message = "";
+
+                                while(byteBuffer.hasRemaining()){
+                                    int bytesRead = socketChannel.read(byteBuffer);
+                                    if(bytesRead == -1){
+                                        socketChannel.close();
+                                        continue;
+                                    }
+
+                                    byteBuffer.flip();
+                                    Charset charset = Charset.forName("ISO-8859-1");
+                                    CharsetDecoder decoder = charset.newDecoder();
+
+                                    message = decoder.decode(byteBuffer).toString();
+                                }
+
+                                if(StringUtils.isNotBlank(message)){
+                                    System.out.println(message);
+
+                                    sendToSubscribers(message);
+                                }
+
                                 break;
-                            case SUBCRIBER_PORT:
-                                subscribers.add(socketChannel);
-                                break;
+                            } else {
+                                subscriberChannel = socketChannel;
+                            }
                         }
                     } else if (selectedKey.isReadable()) {
-                        sendToSubscribers("Is readable?");
+                        SocketChannel socketChannel = ((ServerSocketChannel) selectedKey.channel()).accept();
+                        if(socketChannel != null) {
+                            socketChannel.configureBlocking(false);
+                            Socket socket = socketChannel.socket();
+
+                            sendToSubscribers("Is readable?");
+                        }
                     }
                 }
             }
@@ -72,22 +104,16 @@ public class MessageBroker {
     }
 
     public void sendToSubscribers(String message){
-        ByteBuffer buf = ByteBuffer.allocate(48);
+        try {
+            CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
 
-
-        for(SocketChannel socketChannel : subscribers){
-            buf.clear();
-            buf.put(message.getBytes());
-            buf.flip();
-
-            while(buf.hasRemaining()) {
-                try {
-                    socketChannel.write(buf);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            subscriberChannel.write(encoder.encode(CharBuffer.wrap(message)));
+        } catch (IOException e){
+            System.out.println(e);
         }
     }
 
+    public static void main(String[] args){
+        MessageBroker broker = new MessageBroker();
+    }
 }

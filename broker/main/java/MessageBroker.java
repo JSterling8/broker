@@ -109,7 +109,7 @@ public class MessageBroker {
 
             subscriberChannel.write(encoder.encode(CharBuffer.wrap(message)));
         } catch (IOException e){
-            System.out.println(e);
+            LOGGER.error("Failed to write message to subscribers.", e);
         }
     }
 

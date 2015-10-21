@@ -14,14 +14,11 @@ import java.util.UUID;
  */
 public class Publisher {
 
-    public static final String BROKER_HOST = "127.0.0.1";
-    public static final int BROKER_PUBLISHER_PORT = 8079;
-
     public void connect(){
         try {
             SocketChannel socketChannel = SocketChannel.open();
             socketChannel.configureBlocking(true);
-            socketChannel.connect(new InetSocketAddress(BROKER_HOST, BROKER_PUBLISHER_PORT));
+            socketChannel.connect(new InetSocketAddress(ServerSettings.BROKER_HOSTNAME, ServerSettings.PUBLISHER_PORT));
 
             while(socketChannel.isConnectionPending()){
                 try {

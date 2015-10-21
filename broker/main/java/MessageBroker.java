@@ -23,17 +23,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *
  */
 public class MessageBroker {
-    public static final int PUBLISHER_PORT = 8079;
-    public static final int SUBCRIBER_PORT = 8078;
-    public static final String HOSTNAME = "127.0.0.1";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
+
     private ConcurrentLinkedQueue<SocketChannel> socketChannels = new ConcurrentLinkedQueue<SocketChannel>();
     private ConcurrentLinkedQueue<String> pendingMessages = new ConcurrentLinkedQueue<String>();
 
-    public MessageBroker(){
-
-    }
+    public MessageBroker(){}
 
     public void startBrokerServer() {
         Selector selector = null;
@@ -50,7 +45,7 @@ public class MessageBroker {
                 selector.select();
             } catch (IOException e) {
                 LOGGER.error("Failed to get set of keys from Selector", e);
-                System.exit(-1);                                                // TODO Maybe let it fail a set amount of times before exiting?
+                System.exit(-1);
             }
 
             Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
@@ -72,7 +67,7 @@ public class MessageBroker {
                         }
                         Socket socket = socketChannel.socket();
 
-                        if(socket.getLocalPort() == PUBLISHER_PORT){
+                        if(socket.getLocalPort() == ServerSettings.PUBLISHER_PORT){
                             ByteBuffer byteBuffer = ByteBuffer.allocate(512);
                             String message = null;
 
@@ -138,7 +133,7 @@ public class MessageBroker {
         try {
             publisherServerSocketChannel = ServerSocketChannel.open();
             publisherServerSocketChannel.configureBlocking(false);
-            publisherServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, PUBLISHER_PORT));
+            publisherServerSocketChannel.socket().bind(new InetSocketAddress(ServerSettings.BROKER_HOSTNAME, ServerSettings.PUBLISHER_PORT));
             publisherServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         } catch (IOException e) {
             LOGGER.error("Failed to open publisher ServerSocketChannel", e);
@@ -147,7 +142,7 @@ public class MessageBroker {
         try {
             ServerSocketChannel subscriberServerSocketChannel = ServerSocketChannel.open();
             subscriberServerSocketChannel.configureBlocking(false);
-            subscriberServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, SUBCRIBER_PORT));
+            subscriberServerSocketChannel.socket().bind(new InetSocketAddress(ServerSettings.BROKER_HOSTNAME, ServerSettings.SUBSCRIBER_PORT));
             subscriberServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         } catch (IOException e) {
             LOGGER.error("Failed to open subscriber ServerSocketChannel", e);
@@ -167,6 +162,7 @@ public class MessageBroker {
 
     public void sendMessageToSubscribers(String message){
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
+        int messagesSent = 0;
 
         if(socketChannels.size() > 0) {
             Iterator<SocketChannel> iterator = socketChannels.iterator();
@@ -174,12 +170,15 @@ public class MessageBroker {
                 try {
                     SocketChannel socketChannel = iterator.next();
                     socketChannel.write(encoder.encode(CharBuffer.wrap(message)));
+                    messagesSent++;
                 } catch (IOException e) {
                     LOGGER.info("Failed to write to subscriber.  Removing subscriber from List of subscribers.");
                     iterator.remove();
                 }
             }
-        } else {
+        }
+
+        if(messagesSent == 0 ){
             pendingMessages.add(message);
         }
 

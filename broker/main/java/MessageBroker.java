@@ -61,7 +61,7 @@ public class MessageBroker {
 
                             if(socket.getLocalPort() == PUBLISHER_PORT){
                                 ByteBuffer byteBuffer = ByteBuffer.allocate(512);
-                                String message = "";
+                                String message = null;
 
                                 while(byteBuffer.hasRemaining()){
                                     try {
@@ -83,8 +83,6 @@ public class MessageBroker {
                                 }
 
                                 if(StringUtils.isNotBlank(message)){
-                                    System.out.println(message);
-
                                     sendToSubscribers(message);
                                 }
 

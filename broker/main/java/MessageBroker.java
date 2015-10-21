@@ -14,9 +14,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -29,7 +27,7 @@ public class MessageBroker {
     public static final String HOSTNAME = "127.0.0.1";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
-    private List<SocketChannel> socketChannels = new ArrayList<SocketChannel>();
+    private ConcurrentLinkedQueue<SocketChannel> socketChannels = new ConcurrentLinkedQueue<SocketChannel>();
     private ConcurrentLinkedQueue<String> pendingMessages = new ConcurrentLinkedQueue<String>();
 
     public MessageBroker(){

@@ -65,7 +65,7 @@ public class MessageBroker {
 
                                 while(byteBuffer.hasRemaining()){
                                     try {
-                                        Thread.sleep(100);                      // FIXME - Find way to get message without sleeping...
+                                        Thread.sleep(1000);                      // FIXME - Find way to get message without sleeping...
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
@@ -92,14 +92,6 @@ public class MessageBroker {
                             } else {
                                 socketChannels.add(socketChannel);
                             }
-                        }
-                    } else if (selectedKey.isReadable()) {
-                        SocketChannel socketChannel = ((ServerSocketChannel) selectedKey.channel()).accept();
-                        if(socketChannel != null) {
-                            socketChannel.configureBlocking(false);
-                            Socket socket = socketChannel.socket();
-
-                            sendToSubscribers("Is readable?");
                         }
                     }
                 }

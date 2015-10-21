@@ -1,3 +1,6 @@
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -9,7 +12,7 @@ import java.nio.charset.CharsetDecoder;
  * Created by anon on 21/10/2015.
  */
 public class Subscriber {
-    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {           //TODO Try/catch properly
         while (true) {
             SocketChannel socketChannel = SocketChannel.open();
             socketChannel.configureBlocking(true);
@@ -37,6 +40,17 @@ public class Subscriber {
             }
 
             System.out.println("String is: '" + message + "'");
+
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                CustomObject object = mapper.readValue(message, CustomObject.class);
+
+                System.out.println(object.getId());
+                System.out.println(object.getMessage());
+            } catch (JsonMappingException e){
+                System.out.println("Failed to decode object...");
+            }
+
         }
     }
 }

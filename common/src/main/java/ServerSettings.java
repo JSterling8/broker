@@ -6,4 +6,7 @@ public class ServerSettings {
     public static final int SUBSCRIBER_PORT = 8078;
     public static final String BROKER_HOSTNAME = "127.0.0.1";
     public static final String DEFAULT_CHARSET = "ISO-8859-1";
+
+    // Explicitly uninitializable
+    private ServerSettings(){}
 }

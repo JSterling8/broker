@@ -4,8 +4,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.*;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -48,9 +50,7 @@ public class MessageBroker {
                         socketChannel.configureBlocking(false);
                         Socket socket = socketChannel.socket();
 
-                        sendToSubscribers(socketChannel);
-
-                        switch (socket.getPort()) {
+                        switch (socket.getLocalPort()) {
                             case PUBLISHER_PORT:
                                 //TODO handle publish
                                     sendToSubscribers(socketChannel);
@@ -72,19 +72,7 @@ public class MessageBroker {
     }
 
     public void sendToSubscribers(SocketChannel socketChannel){
-        try {
-            WritableByteChannel wbc = Channels.newChannel(System.out);
-            ByteBuffer b = ByteBuffer.allocateDirect(1024);
-            while (socketChannel.read(b) != -1){
-                System.out.println("Reading input...");
-                b.flip();
-                while (b.hasRemaining()){
-                    wbc.write(b);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();            //TODO Error handling
-        }
+
     }
 
 }

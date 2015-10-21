@@ -39,8 +39,6 @@ public class MessageBroker {
             LOGGER.error("Failed to open Selector", e);
         }
 
-        int[] ports = {PUBLISHER_PORT, SUBCRIBER_PORT};
-
         configureServerSocketChannels(selector);
 
         while(true) {
@@ -83,17 +81,21 @@ public class MessageBroker {
                             break;
                         } else {
                             socketChannels.add(socketChannel);
-                            if(pendingMessages.size() > 0){
-                                Iterator iterator = pendingMessages.iterator();
-                                while(iterator.hasNext()){
-                                    String message = (String) iterator.next();
-                                    sendMessageToSubscribers(message);
-                                    iterator.remove();
-                                }
-                            }
+                            sendMessageBacklog();
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private void sendMessageBacklog() {
+        if(pendingMessages.size() > 0){
+            Iterator iterator = pendingMessages.iterator();
+            while(iterator.hasNext()){
+                String message = (String) iterator.next();
+                sendMessageToSubscribers(message);
+                iterator.remove();
             }
         }
     }

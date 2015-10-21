@@ -36,13 +36,15 @@ public class Publisher {
             String jsonEncodedObject = objectMapper.writeValueAsString(customObject);
 
             socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedObject)));
-            Thread.sleep(5000);
+
+            while(true){
+                // Stay open... Do some stuff?
+            }
+
         } catch (CharacterCodingException e1) {
             e1.printStackTrace();
         } catch (IOException e1) {
             e1.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

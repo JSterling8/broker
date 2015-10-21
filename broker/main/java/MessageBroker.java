@@ -29,6 +29,7 @@ public class MessageBroker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
     private List<SocketChannel> socketChannels = new ArrayList<SocketChannel>();
+    private List<String> pendingMessages = new ArrayList<String>();
 
     public MessageBroker(){
         try{
@@ -65,7 +66,7 @@ public class MessageBroker {
 
                                 while(byteBuffer.hasRemaining()){
                                     try {
-                                        Thread.sleep(1000);                      // FIXME - Find way to get message without sleeping...
+                                        Thread.sleep(500);                      // FIXME - Find way to get message without sleeping...
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
@@ -89,6 +90,15 @@ public class MessageBroker {
                                 break;
                             } else {
                                 socketChannels.add(socketChannel);
+                                if(pendingMessages.size() > 0){
+                                    Iterator iterator = pendingMessages.iterator();
+
+                                    while(iterator.hasNext()){
+                                        String message = (String) iterator.next();
+                                        sendToSubscribers(message);
+                                        iterator.remove();
+                                    }
+                                }
                             }
                         }
                     }
@@ -103,15 +113,19 @@ public class MessageBroker {
     public void sendToSubscribers(String message){
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
 
-        Iterator<SocketChannel> iterator = socketChannels.iterator();
-        while(iterator.hasNext()) {
-            try {
-                SocketChannel socketChannel = iterator.next();
-                socketChannel.write(encoder.encode(CharBuffer.wrap(message)));
-            } catch (IOException e) {
-                LOGGER.info("Failed to write to subscriber.  Removing subscriber from List of subscribers.");
-                iterator.remove();
+        if(socketChannels.size() > 0) {
+            Iterator<SocketChannel> iterator = socketChannels.iterator();
+            while (iterator.hasNext()) {
+                try {
+                    SocketChannel socketChannel = iterator.next();
+                    socketChannel.write(encoder.encode(CharBuffer.wrap(message)));
+                } catch (IOException e) {
+                    LOGGER.info("Failed to write to subscriber.  Removing subscriber from List of subscribers.");
+                    iterator.remove();
+                }
             }
+        } else {
+            pendingMessages.add(message);
         }
 
     }

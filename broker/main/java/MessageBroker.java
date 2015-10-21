@@ -11,6 +11,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -31,32 +32,59 @@ public class MessageBroker {
     private ConcurrentLinkedQueue<String> pendingMessages = new ConcurrentLinkedQueue<String>();
 
     public MessageBroker(){
-        try{
-            Selector selector = Selector.open();
+            Selector selector = null;
+            try {
+                selector = Selector.open();
+            } catch (IOException e) {
+                LOGGER.error("Failed to open Selector", e);
+            }
 
             int[] ports = {PUBLISHER_PORT, SUBCRIBER_PORT};
 
-            ServerSocketChannel publisherServerSocketChannel = ServerSocketChannel.open();
-            publisherServerSocketChannel.configureBlocking(false);
-            publisherServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, PUBLISHER_PORT));
-            publisherServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            ServerSocketChannel publisherServerSocketChannel = null;
+            try {
+                publisherServerSocketChannel = ServerSocketChannel.open();
+                publisherServerSocketChannel.configureBlocking(false);
+                publisherServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, PUBLISHER_PORT));
+                publisherServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            } catch (IOException e) {
+                LOGGER.error("Failed to open publisher ServerSocketChannel", e);
+            }
 
-            ServerSocketChannel subscriberServerSocketChannel = ServerSocketChannel.open();
-            subscriberServerSocketChannel.configureBlocking(false);
-            subscriberServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, SUBCRIBER_PORT));
-            subscriberServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            try {
+                ServerSocketChannel subscriberServerSocketChannel = ServerSocketChannel.open();
+                subscriberServerSocketChannel.configureBlocking(false);
+                subscriberServerSocketChannel.socket().bind(new InetSocketAddress(HOSTNAME, SUBCRIBER_PORT));
+                subscriberServerSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            } catch (IOException e) {
+                LOGGER.error("Failed to open subscriber ServerSocketChannel", e);
+            }
 
             while(true) {
-                selector.select();
+                try {
+                    selector.select();
+                } catch (IOException e) {
+                    LOGGER.error("Failed to get set of keys from Selector", e);
+                    System.exit(-1);                                                // TODO Maybe let it fail a set amount of times before exiting?
+                }
 
                 Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
                 while (selectedKeys.hasNext()) {
                     SelectionKey selectedKey = selectedKeys.next();
 
                     if (selectedKey.isAcceptable()) {
-                        SocketChannel socketChannel = ((ServerSocketChannel) selectedKey.channel()).accept();
+                        SocketChannel socketChannel = null;
+                        try {
+                            socketChannel = ((ServerSocketChannel) selectedKey.channel()).accept();
+                        } catch (IOException e) {
+                            LOGGER.error("Failed to accept ServerSocketChannel connection.", e);
+                        }
                         if(socketChannel != null) {
-                            socketChannel.configureBlocking(false);
+                            try {
+                                socketChannel.configureBlocking(false);
+                            } catch (IOException e) {
+                                LOGGER.error("Failed to configure blocking on SocketChannel", e);
+                            }
                             Socket socket = socketChannel.socket();
 
                             if(socket.getLocalPort() == PUBLISHER_PORT){
@@ -69,9 +97,18 @@ public class MessageBroker {
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
-                                    int bytesRead = socketChannel.read(byteBuffer);
+                                    int bytesRead = 0;
+                                    try {
+                                        bytesRead = socketChannel.read(byteBuffer);
+                                    } catch (IOException e) {
+                                        LOGGER.error("Failed to read byteBuffer", e);
+                                    }
                                     if(bytesRead == -1){
-                                        socketChannel.close();
+                                        try {
+                                            socketChannel.close();
+                                        } catch (IOException e) {
+                                            LOGGER.error("Failed to close SocketChannel");
+                                        }
                                         continue;
                                     }
 
@@ -79,7 +116,11 @@ public class MessageBroker {
                                     Charset charset = Charset.forName("ISO-8859-1");
                                     CharsetDecoder decoder = charset.newDecoder();
 
-                                    message = decoder.decode(byteBuffer).toString();
+                                    try {
+                                        message = decoder.decode(byteBuffer).toString();
+                                    } catch (CharacterCodingException e) {
+                                        LOGGER.error("Failed to decode message from producer", e);
+                                    }
                                 }
 
                                 if(StringUtils.isNotBlank(message)){
@@ -103,10 +144,7 @@ public class MessageBroker {
                     }
                 }
             }
-        } catch (IOException e) {
-            LOGGER.error("Failed to open and listen on both sockets", e);       //TODO This is too coarse.  Add separate try/catch blocks
-            System.exit(-1);
-        }
+
     }
 
     public void sendToSubscribers(String message){

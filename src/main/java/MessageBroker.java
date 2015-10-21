@@ -4,10 +4,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,7 +19,7 @@ public class MessageBroker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
 
-    private static Collection<Socket> publishers = new ConcurrentLinkedQueue<Socket>();
+    private static Collection<SocketChannel> publishers = new ConcurrentLinkedQueue<SocketChannel>();
     private static Collection<Socket> subscribers = new ConcurrentLinkedQueue<Socket>();
 
     private ServerSocketChannel serverSocketChannel;
@@ -31,12 +29,12 @@ public class MessageBroker {
             int[] ports = {PUBLISHER_PORT, SUBCRIBER_PORT};
             Selector selector = Selector.open();
 
-            for(int port : ports){
+            //for(int port : ports){
                 serverSocketChannel = ServerSocketChannel.open();
                 serverSocketChannel.configureBlocking(false);
-                serverSocketChannel.socket().bind(new InetSocketAddress(port));
+                serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1", 8079));
                 serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-            }
+            //}
 
             while(true) {
                 selector.select();
@@ -50,18 +48,20 @@ public class MessageBroker {
                         socketChannel.configureBlocking(false);
                         Socket socket = socketChannel.socket();
 
+                        sendToSubscribers(socketChannel);
+
                         switch (socket.getPort()) {
                             case PUBLISHER_PORT:
                                 //TODO handle publish
-                                    sendToSubscribers(socket);
-
+                                    sendToSubscribers(socketChannel);
+                                    publishers.add(socketChannel);
                                 break;
                             case SUBCRIBER_PORT:
                                 //TODO handle subscribe
                                 break;
                         }
                     } else if (selectedKey.isReadable()) {
-                        // yada yada yada
+                        sendToSubscribers((SocketChannel)publishers.toArray()[0]);
                     }
                 }
             }
@@ -71,8 +71,20 @@ public class MessageBroker {
         }
     }
 
-    public void sendToSubscribers(Socket socket){
-
+    public void sendToSubscribers(SocketChannel socketChannel){
+        try {
+            WritableByteChannel wbc = Channels.newChannel(System.out);
+            ByteBuffer b = ByteBuffer.allocateDirect(1024);
+            while (socketChannel.read(b) != -1){
+                System.out.println("Reading input...");
+                b.flip();
+                while (b.hasRemaining()){
+                    wbc.write(b);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();            //TODO Error handling
+        }
     }
 
 }

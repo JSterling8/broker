@@ -17,6 +17,7 @@ import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by anon on 21/10/2015.
@@ -29,7 +30,7 @@ public class MessageBroker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
     private List<SocketChannel> socketChannels = new ArrayList<SocketChannel>();
-    private List<String> pendingMessages = new ArrayList<String>();
+    private ConcurrentLinkedQueue<String> pendingMessages = new ConcurrentLinkedQueue<String>();
 
     public MessageBroker(){
         try{

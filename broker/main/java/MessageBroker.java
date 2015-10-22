@@ -48,6 +48,10 @@ public class MessageBroker {
             while (selectedKeys.hasNext()) {
                 SelectionKey selectedKey = selectedKeys.next();
 
+                if (!selectedKey.isValid()) {
+                    continue;
+                }
+
                 if (selectedKey.isAcceptable()) {
                     SocketChannel socketChannel = null;
                     try {
@@ -72,8 +76,13 @@ public class MessageBroker {
                                 LOGGER.error("Failed to attach read selector to publisher");
                             }
                         } else {
-                            subscriberSessions.add(new SubscriberSession(selectedKey, socketChannel));
-                            sendMessageBacklog();
+                            try {
+                                SelectionKey writeKey = socketChannel.register(selector, SelectionKey.OP_WRITE);
+                                subscriberSessions.add(new SubscriberSession(writeKey, socketChannel));
+                                sendMessageBacklog();
+                            } catch (ClosedChannelException e) {
+                                LOGGER.error("Failed to attach write selector to subscriber");
+                            }
                         }
                     }
                 } else if (selectedKey.isReadable()) {

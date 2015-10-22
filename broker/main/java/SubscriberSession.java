@@ -45,7 +45,7 @@ public class SubscriberSession {
             return true;
         } catch (Exception e){
             disconnect();
-            LOGGER.error("Failed to write to a subscriber channel", e);
+            LOGGER.error("Failed to write to a subscriber channel.  Connection probably closed by remote host.");
             return false;
         }
     }

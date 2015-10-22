@@ -7,10 +7,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -57,7 +54,7 @@ public class MessageBroker {
                     try {
                         socketChannel = ((ServerSocketChannel) selectedKey.channel()).accept();
                     } catch (IOException e) {
-                        LOGGER.error("Failed to accept ServerSocketChannel connection.", e);
+                        LOGGER.error("Failed to accept ServerSocketChannel connection", e);
                     }
                     if(socketChannel != null) {
                         try {
@@ -65,6 +62,13 @@ public class MessageBroker {
                         } catch (IOException e) {
                             LOGGER.error("Failed to configure blocking on SocketChannel", e);
                         }
+
+                        try {
+                            socketChannel.register(selector, SelectionKey.OP_READ);
+                        } catch (ClosedChannelException e) {
+                            LOGGER.error("Failed to attach read selector to publisher");
+                        }
+
                         Socket socket = socketChannel.socket();
 
                         if(socket.getLocalPort() == ServerSettings.PUBLISHER_PORT){

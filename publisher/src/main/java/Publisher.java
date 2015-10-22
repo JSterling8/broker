@@ -43,10 +43,6 @@ public class Publisher {
                             "\nAnd UUID: " + customObject.getId());
             socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedObject)));
 
-            while(true){
-                // Stay open... Do some stuff?
-            }
-
         } catch (CharacterCodingException e1) {
             e1.printStackTrace();
         } catch (IOException e1) {

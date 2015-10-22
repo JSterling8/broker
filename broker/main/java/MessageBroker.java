@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.CharBuffer;
 import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -20,7 +19,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class MessageBroker {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
 
-    private ConcurrentLinkedQueue<SocketChannel> subscriberSocketChannels = new ConcurrentLinkedQueue<SocketChannel>();
+    private ConcurrentLinkedQueue<SubscriberSession> subscriberSessions = new ConcurrentLinkedQueue<SubscriberSession>();
     private ConcurrentLinkedQueue<String> pendingMessages = new ConcurrentLinkedQueue<String>();
 
     private HashMap<SelectionKey, PublisherSession> publisherMap = new HashMap<SelectionKey, PublisherSession>();
@@ -73,7 +72,7 @@ public class MessageBroker {
                                 LOGGER.error("Failed to attach read selector to publisher");
                             }
                         } else {
-                            subscriberSocketChannels.add(socketChannel);
+                            subscriberSessions.add(new SubscriberSession(selectedKey, socketChannel));
                             sendMessageBacklog();
                         }
                     }
@@ -128,17 +127,13 @@ public class MessageBroker {
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
         int messagesSent = 0;
 
-        if(subscriberSocketChannels.size() > 0) {
-            Iterator<SocketChannel> iterator = subscriberSocketChannels.iterator();
-            while (iterator.hasNext()) {
-                try {
-                    SocketChannel socketChannel = iterator.next();
-                    socketChannel.write(encoder.encode(CharBuffer.wrap(message)));
-                    messagesSent++;
-                } catch (IOException e) {
-                    LOGGER.info("Failed to write to subscriber.  Removing subscriber from List of subscribers.");
-                    iterator.remove();
-                }
+        Iterator<SubscriberSession> iterator = subscriberSessions.iterator();
+        while(iterator.hasNext()){
+            SubscriberSession subscriberSession = iterator.next();
+            if(subscriberSession.write(message)){
+                messagesSent++;
+            } else {
+                iterator.remove();
             }
         }
 

@@ -38,7 +38,7 @@ public class MessageBroker {
 
         while(true) {
             try {
-                selector.select();
+                selector.selectNow();
             } catch (IOException e) {
                 LOGGER.error("Failed to get set of keys from Selector", e);
                 System.exit(-1);

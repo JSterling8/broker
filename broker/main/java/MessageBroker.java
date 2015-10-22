@@ -123,7 +123,7 @@ public class MessageBroker {
         }
     }
 
-    public void sendMessageToSubscribers(String message){
+    private void sendMessageToSubscribers(String message){
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
         int messagesSent = 0;
 

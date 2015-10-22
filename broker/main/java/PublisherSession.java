@@ -13,7 +13,7 @@ import java.nio.charset.CharsetDecoder;
  * Created by Jonathan Sterling on 22/10/2015.
  */
 public class PublisherSession {
-    private Logger LOGGER = LoggerFactory.getLogger(PublisherSession.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PublisherSession.class);
 
     private SocketChannel socketChannel;
     private SelectionKey selectionKey;

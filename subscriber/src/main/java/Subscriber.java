@@ -84,7 +84,7 @@ public class Subscriber {
 
                     LOGGER.info("Converted message to CustomObject with message: '" + customObject2.getMessage() + "'\n" +
                             "And UUID: '" + customObject2.getId() + "'\n" +
-                            "And aThirdField: '" +"'");
+                            "And aThirdField: '" + customObject2.getaThirdField() + "'");
                 }
 
             } catch (JsonMappingException e){

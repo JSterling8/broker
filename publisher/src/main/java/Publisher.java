@@ -62,7 +62,7 @@ public class Publisher {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             String jsonEncodedMessage = objectMapper.writeValueAsString(customObject2);
-            MessageWrapper messageWrapper = new MessageWrapper("CustomObject", jsonEncodedMessage);
+            MessageWrapper messageWrapper = new MessageWrapper("CustomObject2", jsonEncodedMessage);
             String jsonEncodedMessageWrapper = objectMapper.writeValueAsString(messageWrapper);
 
             socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedMessageWrapper)));
@@ -84,7 +84,7 @@ public class Publisher {
 
         CustomObject customObject = new CustomObject("A test publisher message",
                 new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l));
-        publisher.sendCustomObject(customObject);
+        // publisher.sendCustomObject(customObject);
 
         Thread.sleep(200);
 

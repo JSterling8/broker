@@ -40,11 +40,8 @@ public class Publisher {
         }
     }
 
-    public void sendCustomObject(){
+    public void sendCustomObject(CustomObject customObject){
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
-
-        CustomObject customObject = new CustomObject("A test publisher message",
-                new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l));
 
         ObjectMapper objectMapper = new ObjectMapper();
         String jsonEncodedObject = null;
@@ -66,7 +63,9 @@ public class Publisher {
     public static void main(String[] args){
         Publisher publisher = new Publisher();
         publisher.connect();
-        publisher.sendCustomObject();
-    }
 
+        CustomObject customObject = new CustomObject("A test publisher message",
+                new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l));
+        publisher.sendCustomObject(customObject);
+    }
 }

@@ -7,7 +7,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 /**
- * Created by anon on 22/10/2015.
+ * Created by Jonathan Sterling on 22/10/2015.
  */
 public class SubscriberSession {
     private Logger LOGGER = LoggerFactory.getLogger(PublisherSession.class);

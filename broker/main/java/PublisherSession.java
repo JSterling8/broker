@@ -10,7 +10,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
 /**
- * Created by anon on 22/10/2015.
+ * Created by Jonathan Sterling on 22/10/2015.
  */
 public class PublisherSession {
     private Logger LOGGER = LoggerFactory.getLogger(PublisherSession.class);

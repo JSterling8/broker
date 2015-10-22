@@ -28,7 +28,7 @@ public class Subscriber {
             socketChannel.configureBlocking(true);
             socketChannel.connect(new InetSocketAddress(ServerSettings.BROKER_HOSTNAME, ServerSettings.SUBSCRIBER_PORT));
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to connect to broker...", e);
         }
     }
 
@@ -41,7 +41,7 @@ public class Subscriber {
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Connection pending sleep was interrupted", e);
                 }
             }
 
@@ -63,7 +63,7 @@ public class Subscriber {
                 try {
                     message = decoder.decode(byteBuffer).toString();
                 } catch (CharacterCodingException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Failed to decode message from server...", e);
                 }
             }
 
@@ -78,9 +78,9 @@ public class Subscriber {
             } catch (JsonMappingException e){
                 LOGGER.error("Failed to decode object...", e);
             } catch (JsonParseException e) {
-                e.printStackTrace();
+                LOGGER.error("Failed to decode object...", e);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Failed to decode object...", e);
             }
         }
     }

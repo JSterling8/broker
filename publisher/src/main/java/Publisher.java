@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.UUID;
@@ -27,16 +26,12 @@ public class Publisher {
             socketChannel.connect(new InetSocketAddress(ServerSettings.BROKER_HOSTNAME, ServerSettings.PUBLISHER_PORT));
 
             while(socketChannel.isConnectionPending()){
-                try {
                     Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
             }
-        } catch (CharacterCodingException e1) {
-            e1.printStackTrace();
         } catch (IOException e1) {
-            e1.printStackTrace();
+            LOGGER.error("Failed to connect to message broker");
+        } catch (InterruptedException e){
+            LOGGER.error("Connection pending sleep was interrupted.", e);
         }
     }
 
@@ -48,7 +43,7 @@ public class Publisher {
         try {
             jsonEncodedObject = objectMapper.writeValueAsString(customObject);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to json message", e);
         }
 
         LOGGER.debug("Sending CustomObject with message: " + customObject.getMessage() +
@@ -56,7 +51,7 @@ public class Publisher {
         try {
             socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedObject)));
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to send json message");
         }
     }
 

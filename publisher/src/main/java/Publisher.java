@@ -82,11 +82,11 @@ public class Publisher {
         Publisher publisher = new Publisher();
         publisher.connect();
 
-        CustomObject customObject = new CustomObject("A test publisher message",
+/*        CustomObject customObject = new CustomObject("A test publisher message",
                 new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l));
-        // publisher.sendCustomObject(customObject);
+        publisher.sendCustomObject(customObject);
 
-        Thread.sleep(200);
+        Thread.sleep(3000);*/
 
         CustomObject2 customObject2 = new CustomObject2("A test publisher message",
                 new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l),

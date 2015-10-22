@@ -71,16 +71,34 @@ public class Subscriber {
 
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                CustomObject object = mapper.readValue(message, CustomObject.class);
+                MessageWrapper messageWrapper = mapper.readValue(message, MessageWrapper.class);
 
-                LOGGER.info("Converted message to CustomObject with message: '" + object.getMessage() + "'\n" +
-                        "And UUID: '" + object.getId() + "'");
+                Class<?> cls = Class.forName(messageWrapper.getDataType());
+                if(cls.newInstance() instanceof CustomObject){
+                    CustomObject customObject = mapper.readValue(messageWrapper.getMessage(), CustomObject.class);
+
+                    LOGGER.info("Converted message to CustomObject with message: '" + customObject.getMessage() + "'\n" +
+                            "And UUID: '" + customObject.getId() + "'");
+                } else if (cls.newInstance() instanceof  CustomObject2){
+                    CustomObject2 customObject2 = mapper.readValue(messageWrapper.getMessage(), CustomObject2.class);
+
+                    LOGGER.info("Converted message to CustomObject with message: '" + customObject2.getMessage() + "'\n" +
+                            "And UUID: '" + customObject2.getId() + "'\n" +
+                            "And aThirdField: '" +"'");
+                }
+
             } catch (JsonMappingException e){
                 LOGGER.error("Failed to decode object...", e);
             } catch (JsonParseException e) {
                 LOGGER.error("Failed to decode object...", e);
             } catch (IOException e) {
                 LOGGER.error("Failed to decode object...", e);
+            } catch (ClassNotFoundException e) {
+                LOGGER.error("Failed to decode data...", e);
+            } catch (InstantiationException e) {
+                LOGGER.error("Failed to decode data...", e);
+            } catch (IllegalAccessException e) {
+                LOGGER.error("Failed to decode data...", e);
             }
         }
     }

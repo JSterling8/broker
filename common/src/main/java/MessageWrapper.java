@@ -4,14 +4,17 @@ import java.sql.Timestamp;
  * Created by Jonathan Sterling on 21/10/2015.
  */
 public class MessageWrapper {
-    private final Timestamp timestamp;
-    private final String dataType;
-    private final String message;
+    private final Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+    private String dataType;
+    private String message;
+
+    public MessageWrapper(){
+        // No args constructor for Jackson
+    }
 
     public MessageWrapper(String dataType, String message){
         this.dataType = dataType;
         this.message = message;
-        this.timestamp = new Timestamp(System.currentTimeMillis());
     }
 
     public Timestamp getTimestamp() {

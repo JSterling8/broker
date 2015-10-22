@@ -39,28 +39,58 @@ public class Publisher {
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
 
         ObjectMapper objectMapper = new ObjectMapper();
-        String jsonEncodedObject = null;
         try {
-            jsonEncodedObject = objectMapper.writeValueAsString(customObject);
+            String jsonEncodedMessage = objectMapper.writeValueAsString(customObject);
+            MessageWrapper messageWrapper = new MessageWrapper("CustomObject", jsonEncodedMessage);
+            String jsonEncodedMessageWrapper = objectMapper.writeValueAsString(messageWrapper);
+
+            socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedMessageWrapper)));
+
+            LOGGER.debug("Sending CustomObject with message: " + customObject.getMessage() +
+                    "\nAnd UUID: " + customObject.getId());
+
         } catch (JsonProcessingException e) {
             LOGGER.error("Failed to json message", e);
-        }
-
-        LOGGER.debug("Sending CustomObject with message: " + customObject.getMessage() +
-                "\nAnd UUID: " + customObject.getId());
-        try {
-            socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedObject)));
         } catch (IOException e) {
             LOGGER.error("Failed to send json message");
         }
     }
 
-    public static void main(String[] args){
+    public void sendCustomObject2(CustomObject2 customObject2){
+        CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String jsonEncodedMessage = objectMapper.writeValueAsString(customObject2);
+            MessageWrapper messageWrapper = new MessageWrapper("CustomObject", jsonEncodedMessage);
+            String jsonEncodedMessageWrapper = objectMapper.writeValueAsString(messageWrapper);
+
+            socketChannel.write(encoder.encode(CharBuffer.wrap(jsonEncodedMessageWrapper)));
+
+            LOGGER.debug("Sending CustomObject with message: " + customObject2.getMessage() +
+                    "\nAnd UUID: " + customObject2.getId() +
+                    "\nAnd aThirdField: " + customObject2.getaThirdField());
+
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Failed to json message", e);
+        } catch (IOException e) {
+            LOGGER.error("Failed to send json message");
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
         Publisher publisher = new Publisher();
         publisher.connect();
 
         CustomObject customObject = new CustomObject("A test publisher message",
                 new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l));
         publisher.sendCustomObject(customObject);
+
+        Thread.sleep(200);
+
+        CustomObject2 customObject2 = new CustomObject2("A test publisher message",
+                new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l),
+                "Now we're cooking with gas!");
+        publisher.sendCustomObject2(customObject2);
     }
 }

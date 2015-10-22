@@ -5,9 +5,11 @@ import java.sql.Timestamp;
  */
 public class MessageWrapper {
     private final Timestamp timestamp;
+    private final String dataType;
     private final String message;
 
-    public MessageWrapper(String message){
+    public MessageWrapper(String dataType, String message){
+        this.dataType = dataType;
         this.message = message;
         this.timestamp = new Timestamp(System.currentTimeMillis());
     }

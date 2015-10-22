@@ -5,13 +5,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.*;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -22,8 +20,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class MessageBroker {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageBroker.class);
 
-    private ConcurrentLinkedQueue<SocketChannel> socketChannels = new ConcurrentLinkedQueue<SocketChannel>();
+    private ConcurrentLinkedQueue<SocketChannel> subscriberSocketChannels = new ConcurrentLinkedQueue<SocketChannel>();
     private ConcurrentLinkedQueue<String> pendingMessages = new ConcurrentLinkedQueue<String>();
+
+    private HashMap<SelectionKey, PublisherSession> publisherMap = new HashMap<SelectionKey, PublisherSession>();
 
     public MessageBroker(){}
 
@@ -63,29 +63,29 @@ public class MessageBroker {
                             LOGGER.error("Failed to configure blocking on SocketChannel", e);
                         }
 
-                        try {
-                            socketChannel.register(selector, SelectionKey.OP_READ);
-                        } catch (ClosedChannelException e) {
-                            LOGGER.error("Failed to attach read selector to publisher");
-                        }
-
                         Socket socket = socketChannel.socket();
 
                         if(socket.getLocalPort() == ServerSettings.PUBLISHER_PORT){
-                            ByteBuffer byteBuffer = ByteBuffer.allocate(512);
-                            String message = null;
-
-                            message = getMessageFromPublisher(socketChannel, byteBuffer, message);
-
-                            if(StringUtils.isNotBlank(message)){
-                                sendMessageToSubscribers(message);
+                            try {
+                                SelectionKey readKey = socketChannel.register(selector, SelectionKey.OP_READ);
+                                publisherMap.put(readKey, new PublisherSession(readKey, socketChannel));
+                            } catch (ClosedChannelException e) {
+                                LOGGER.error("Failed to attach read selector to publisher");
                             }
-
-                            break;
                         } else {
-                            socketChannels.add(socketChannel);
+                            subscriberSocketChannels.add(socketChannel);
                             sendMessageBacklog();
                         }
+                    }
+                } else if (selectedKey.isReadable()) {
+                    PublisherSession publisherSession = publisherMap.get(selectedKey);
+                    if(publisherSession == null){
+                        continue;
+                    }
+                    String message = publisherSession.read();
+
+                    if(StringUtils.isNotBlank(message)){
+                        sendMessageToSubscribers(message);
                     }
                 }
             }
@@ -101,35 +101,6 @@ public class MessageBroker {
                 iterator.remove();
             }
         }
-    }
-
-    private String getMessageFromPublisher(SocketChannel socketChannel, ByteBuffer byteBuffer, String message) {
-        while(byteBuffer.hasRemaining()){
-            try {
-                Thread.sleep(500);                      // FIXME - Find way to get full message without sleeping...
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            int bytesRead = 0;
-            try {
-                bytesRead = socketChannel.read(byteBuffer);
-            } catch (IOException e) {
-                LOGGER.error("Failed to read byteBuffer", e);
-            }
-            if(bytesRead == -1){
-                try {
-                    socketChannel.close();
-                } catch (IOException e) {
-                    LOGGER.error("Failed to close SocketChannel");
-                }
-                continue;
-            }
-
-            byteBuffer.flip();
-
-            message = decodeMessage(byteBuffer, message);
-        }
-        return message;
     }
 
     private void configureServerSocketChannels(Selector selector) {
@@ -153,23 +124,12 @@ public class MessageBroker {
         }
     }
 
-    private String decodeMessage(ByteBuffer byteBuffer, String message) {
-        Charset charset = Charset.forName("ISO-8859-1");
-        CharsetDecoder decoder = charset.newDecoder();
-        try {
-            message = decoder.decode(byteBuffer).toString();
-        } catch (CharacterCodingException e) {
-            LOGGER.error("Failed to decode message from producer", e);
-        }
-        return message;
-    }
-
     public void sendMessageToSubscribers(String message){
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
         int messagesSent = 0;
 
-        if(socketChannels.size() > 0) {
-            Iterator<SocketChannel> iterator = socketChannels.iterator();
+        if(subscriberSocketChannels.size() > 0) {
+            Iterator<SocketChannel> iterator = subscriberSocketChannels.iterator();
             while (iterator.hasNext()) {
                 try {
                     SocketChannel socketChannel = iterator.next();

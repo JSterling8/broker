@@ -1,7 +1,7 @@
 import java.sql.Timestamp;
 
 /**
- * Created by anon on 21/10/2015.
+ * Created by Jonathan Sterling on 21/10/2015.
  */
 public class MessageWrapper {
     private final Timestamp timestamp;
@@ -20,5 +20,9 @@ public class MessageWrapper {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getDataType() {
+        return dataType;
     }
 }

@@ -1,5 +1,3 @@
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,17 +85,9 @@ public class Subscriber {
                             "And aThirdField: '" + customObject2.getaThirdField() + "'");
                 }
 
-            } catch (JsonMappingException e){
-                LOGGER.error("Failed to decode object...", e);
-            } catch (JsonParseException e) {
-                LOGGER.error("Failed to decode object...", e);
             } catch (IOException e) {
                 LOGGER.error("Failed to decode object...", e);
-            } catch (ClassNotFoundException e) {
-                LOGGER.error("Failed to decode data...", e);
-            } catch (InstantiationException e) {
-                LOGGER.error("Failed to decode data...", e);
-            } catch (IllegalAccessException e) {
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
                 LOGGER.error("Failed to decode data...", e);
             }
         }

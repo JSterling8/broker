@@ -43,7 +43,7 @@ public class MessageBroker {
                 LOGGER.error("Failed to get set of keys from Selector", e);
                 System.exit(-1);
             }
-
+            
             Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
             while (selectedKeys.hasNext()) {
                 SelectionKey selectedKey = selectedKeys.next();

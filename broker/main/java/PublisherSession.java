@@ -22,6 +22,11 @@ public class PublisherSession {
     public PublisherSession(SelectionKey selectionKey, SocketChannel socketChannel){
         this.selectionKey = selectionKey;
         this.socketChannel = socketChannel;
+        try {
+            this.socketChannel.configureBlocking(false);
+        } catch (IOException e) {
+            LOGGER.error("Failed to set a PublisherSession as non-blocking.");
+        }
     }
 
     public void disconnect(){

@@ -22,6 +22,11 @@ public class SubscriberSession {
     public SubscriberSession(SelectionKey selectionKey, SocketChannel socketChannel){
         this.selectionKey = selectionKey;
         this.socketChannel = socketChannel;
+        try {
+            this.socketChannel.configureBlocking(false);
+        } catch (IOException e) {
+            LOGGER.error("Failed to set a SubscriberSesion as non-blocking.");
+        }
     }
 
     public void disconnect(){

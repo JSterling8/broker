@@ -35,7 +35,7 @@ public class Publisher {
         }
     }
 
-    public void sendCustomObject(CustomObject customObject){
+    public void sendCustomObject1(CustomObject customObject){
         CharsetEncoder encoder = Charset.forName("ISO-8859-1").newEncoder();
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -81,12 +81,6 @@ public class Publisher {
     public static void main(String[] args) throws InterruptedException {
         Publisher publisher = new Publisher();
         publisher.connect();
-
-/*        CustomObject customObject = new CustomObject("A test publisher message",
-                new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l));
-        publisher.sendCustomObject(customObject);
-
-        Thread.sleep(3000);*/
 
         CustomObject2 customObject2 = new CustomObject2("A test publisher message",
                 new UUID(System.currentTimeMillis(), System.currentTimeMillis() - 41134234l),
